@@ -119,7 +119,7 @@ void loop()
   
   int resultado;
 
-  botonPulsado = !digitalRead (botonPIN);
+  botonPulsado = digitalRead (botonPIN);
   ahora = millis();
   
   switch (estado) {
@@ -290,7 +290,7 @@ int melodia (int modo)
 
     // Espera la duracion de la nota y apaga todas las luces
      contadorNotas ++;
-     delay (100);
+     delay (10);
      return 0;
   }
 }
