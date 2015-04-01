@@ -1,9 +1,10 @@
 
 // tiempos (en segundos)
 
-int tiempoBoton = 500;                 // tiempo de filtrado del boton ms.
-unsigned long tiempoSalidaON = 10000;  // tiempo minimo que permanece conectada la salida
-unsigned long tiempoSalidaOFF = 5000;  // tiempo que permanece conectada la salida desde el fin de la melodia
+int tiempoBoton = 500;                  // tiempo de filtrado del boton ms.
+unsigned long tiempoSalidaON  =  2000;  // tiempo minimo que permanece conectada la salida
+unsigned long tiempoSalidaOFF =  1000;  // tiempo que permanece conectada la salida desde el fin de la melodia
+unsigned long tiempoNoEmpieza = 10000;  // tiempo desde el apagado hasta que decide volver a empezar la melodia
 
 
 // Configuracion de entradas y salidas
@@ -14,22 +15,7 @@ int sonidoPIN = 4;
 int salidaPIN = 5;
 
 
-// Melodia
-
-char duracion [] = {2,1,1,2,2,  1,1,1,1,2,2,  0,
-                    2,1,1,1,1,1,1,  4,1,2,4,  0,
-                    2,1,1,2,2,  1,1,1,1,2,2,   2,1,1,1,1,1,1,   4,2,  0};
-
-int nota [] = {SOL,SOL,FA,MI,MI,  SOL,SOL,SOL,FA,MI,MI,  parada, 
-               SOL,SOL,SOL,LA,SOL,FA,MI,  FA,MI, RE, silencio,  parada,
-               FA,FA,MI,RE,RE,  FA,FA,FA,MI,RE,RE,   FA,FA,FA,SOL,FA,MI,RE,   MI,DO, fin};
-
-
-
-
-
 // Definicion de las notas
-
 #define silencio  0 // Silencio
 #define parada    1 // Parada
 #define fin       2 // Final
@@ -45,6 +31,20 @@ int nota [] = {SOL,SOL,FA,MI,MI,  SOL,SOL,SOL,FA,MI,MI,  parada,
 #define LA   440 // La 3
 #define LA_  466 // La# 3
 #define SI   494 // Si 3
+
+
+// Melodia
+int notasMelodia [] = {SOL,2, SOL,1, FA,1, MI,2, MI,2, SOL,1, SOL,1, SOL,1, FA,1, MI,2, MI,2, parada,0,
+
+                       SOL,2, SOL,1, SOL,1, LA,1, SOL,1, FA,1, MI,1, FA,4, RE,2, silencio,4,  parada,0,
+
+                       FA,2, FA,1, MI,1, RE,2, RE,2, FA,1, FA,1, FA,1, MI,1, RE,2, RE,2, 
+                       FA,2, FA,1, FA,1, SOL,1, FA,1, MI,1, RE,1, MI,4, DO,2, fin,0};
+
+
+
+
+
 
 
 // Variables auxiliares
@@ -132,17 +132,16 @@ void loop()
       resultado = melodia(1);
       
       // Si llega a una señal de parada interrumpe la melodia
-      if (resultado == 1)
+      if (resultado == parada)
       {
         ahora = millis();
         millisSonidoOFF = ahora;
         estado = 3;
       }
       
-      // Si llega al final de la melodia la reproduce salta al 
-      // bloque numero 6
+      // Si llega al final de la melodia salta al bloque numero 6
 
-      if (resultado == 2) 
+      if (resultado == fin) 
       {
         delay (2000);
         estado = 6;
@@ -151,7 +150,7 @@ void loop()
       
     case 3:
       // contadorNotas = 0;
-      if ((ahora > millisSalidaON + tiempoSalidaON) && (ahora > millisSonidoOFF + 5000))
+      if ((ahora > millisSalidaON + tiempoSalidaON) && (ahora > millisSonidoOFF + tiempoSalidaOFF))
       {
         millisSalidaOFF = ahora;
           salidaActivada = false;
@@ -165,7 +164,7 @@ void loop()
       break;
       
     case 5:
-      if (ahora > millisSalidaOFF + tiempoSalidaOFF)
+      if (ahora > millisSalidaOFF + tiempoNoEmpieza)
       {
         contadorParadas = 0;
         estado = 0;
@@ -225,11 +224,15 @@ int melodia (int modo)
   
   
   static int contadorNotas;
+  int nota, duracion;
   // Si es necesario empieza la melodia desde le principio
   if ((modo == 0)) contadorNotas = 0;
   
+  nota     = notasMelodia[2*contadorNotas];
+  duracion = notasMelodia[2*contadorNotas + 1];
+  
   // Si llega a la ultima nota no hace nada y devuelve un 2
-  if (nota [contadorNotas] == fin) 
+  if (nota == fin) 
   {
     contadorNotas = 0;
     return 2;
@@ -237,7 +240,7 @@ int melodia (int modo)
   
   // Para si llega a una señal de parada y no esta en modo continuo
   // indica que hay 
-  else if ((nota [contadorNotas] == parada) && (modo != 2))
+  else if ((nota == parada) && (modo != 2))
   {
     contadorNotas ++;
     return 1;
@@ -248,23 +251,23 @@ int melodia (int modo)
   {
     
     // Si la nota es un silencio no reproduce ninguna nota
-    if (nota [contadorNotas] == silencio) noTone (sonidoPIN);
+    if (nota == silencio) noTone (sonidoPIN);
     
     // En caso contrario enciende una luz en secuencia aleatoria y suena la nota
     else
     {
       digitalWrite (LEDPIN [random (4)], HIGH);
-      tone (sonidoPIN, int (nota [contadorNotas])); 
+      tone (sonidoPIN, int (nota)); 
     }
 
-    delay (int (duracion [contadorNotas]) * 200);
+    delay (int (duracion) * 200);
     noTone (sonidoPIN);
     for (int i = 0; i < 4; i++) {digitalWrite (LEDPIN [i], LOW);}
     
     // Imprime informacion sobre la nota
     Serial.print (contadorNotas);        
-    Serial.print ("\tNota ");            Serial.print (nota [contadorNotas]); 
-    Serial.print ("\tduracion ");        Serial.print (int (duracion [contadorNotas]));
+    Serial.print ("\tNota ");            Serial.print (nota); 
+    Serial.print ("\tduracion ");        Serial.print (int (duracion));
     Serial.print ("\tmilisSalidaOn = "); Serial.print (millisSalidaON);
     Serial.println ();
 
