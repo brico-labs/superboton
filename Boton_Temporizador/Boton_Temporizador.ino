@@ -1,3 +1,35 @@
+
+// tiempos (en segundos)
+
+int tiempoBoton = 500;                 // tiempo de filtrado del boton ms.
+unsigned long tiempoSalidaON = 10000;  // tiempo minimo que permanece conectada la salida
+unsigned long tiempoSalidaOFF = 5000;  // tiempo que permanece conectada la salida desde el fin de la melodia
+
+
+// Configuracion de entradas y salidas
+
+int LEDPIN [] = {8, 9, 10, 11};
+int vibraPIN  = 9;
+int sonidoPIN = 4;
+int salidaPIN = 5;
+
+
+// Melodia
+
+char duracion [] = {2,1,1,2,2,  1,1,1,1,2,2,  0,
+                    2,1,1,1,1,1,1,  4,1,2,4,  0,
+                    2,1,1,2,2,  1,1,1,1,2,2,   2,1,1,1,1,1,1,   4,2,  0};
+
+int nota [] = {SOL,SOL,FA,MI,MI,  SOL,SOL,SOL,FA,MI,MI,  parada, 
+               SOL,SOL,SOL,LA,SOL,FA,MI,  FA,MI, RE, silencio,  parada,
+               FA,FA,MI,RE,RE,  FA,FA,FA,MI,RE,RE,   FA,FA,FA,SOL,FA,MI,RE,   MI,DO, fin};
+
+
+
+
+
+// Definicion de las notas
+
 #define silencio  0 // Silencio
 #define parada    1 // Parada
 #define fin       2 // Final
@@ -15,65 +47,26 @@
 #define SI   494 // Si 3
 
 
-int LEDPIN [] = {8, 9, 10, 11};
-int vibraPIN  = 9;
-int sonidoPIN = 4;
-int salidaPIN = 5;
-
-char paradas [] = {12, 21, 33, 40};
-int indiceParada = 0;
-unsigned long tiempoParada = 10000;
-unsigned long millisParada = 0;
-int numParadas;
-
-
-
-
-unsigned long salidaTiempoOn;
-unsigned long tiempoTemporiza = 20000;
-
-unsigned int frecuencia_nota [12];
-
-int casa = SOL;
-
-int longitudMelodia;
-
-
+// Variables auxiliares
 
 unsigned long ahora;
 int estado, estadoAnterior;
 
-
 // boton
-boolean botonPulsado, botonAunPulsado;
+boolean botonPulsado;
 unsigned long millisBoton;
 int botonPIN  = 3;
-int tiempoBoton = 500;  // tiempo de filtrado del boton.
 
 // salida
 unsigned long millisSalidaON, millisSalidaOFF;
-unsigned long tiempoSalidaON = 10000;
-unsigned long tiempoSalidaOFF = 5000;
 boolean salidaActivada;
 
 // melodia
 boolean sonidoActivado = LOW;
 unsigned long millisSonidoOFF;
 int contadorNotas;
-
 int contadorParadas;
 
-
-
-
-
-char duracion [] = {2,1,1,2,2,  1,1,1,1,2,2,  0,
-                    2,1,1,1,1,1,1,  4,1,2,4,  0,
-                    2,1,1,2,2,  1,1,1,1,2,2,   2,1,1,1,1,1,1,   4,2,  0};
-
-int nota [] = {SOL,SOL,FA,MI,MI,  SOL,SOL,SOL,FA,MI,MI,  parada, 
-               SOL,SOL,SOL,LA,SOL,FA,MI,  FA,MI, RE, silencio,  parada,
-               FA,FA,MI,RE,RE,  FA,FA,FA,MI,RE,RE,   FA,FA,FA,SOL,FA,MI,RE,   MI,DO, fin};
 
 
 
@@ -87,22 +80,10 @@ void setup()
   pinMode (sonidoPIN, OUTPUT);
   pinMode (salidaPIN, OUTPUT);
 
-  // Calcula la longitud del array con la melodia
-  longitudMelodia = sizeof (duracion);
-  
-  // Calcula el numero de paradas y establece la ultima
-  numParadas = int (sizeof (paradas));
-  paradas [numParadas - 1] = longitudMelodia;
   
   estado = 0; estadoAnterior = estado;
 
   Serial.begin (9600);
-  
-  Serial.print ("Longitud de la cancion = "); Serial.println (longitudMelodia);
-  Serial.print ("          numero de paradas "); Serial.println (numParadas);
-  for (int i = 0; i < numParadas; i++)
-  {Serial.print ("          parada de la melodia en "); Serial.println (int (paradas [i]));}
-  
 }
 
 void loop() 
